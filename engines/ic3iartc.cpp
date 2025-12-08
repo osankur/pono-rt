@@ -54,16 +54,7 @@ void IC3IAQ::reconstruct_trace(const ProofGoal * pg, TermVec & out)
   }
 
   push_solver_context();
-  // smt::Term last_state_abs = ia_.abstract(out.back());
   smt::Term next_bad = ts_.next(bad_);
-  // smt::Term bad_abs = ia_.abstract(next_bad);
-  // std::cout << "last_state: " << out.back() << "\n";
-  // smt::Term trans = ts_.trans();
-  // std::cout << "trans: " << ts_.trans() << "\n";
-  // std::cout << "next_bad: " << next_bad << "\n";
-  // solver_->assert_formula(out.back());
-  // solver_->assert_formula(ts_.next(bad_));
-  // solver_->assert_formula(ts_.trans());
 
   solver_->assert_formula(out.back());
   solver_->assert_formula(ts_.trans());
@@ -71,18 +62,7 @@ void IC3IAQ::reconstruct_trace(const ProofGoal * pg, TermVec & out)
   Result r = check_sat();
   assert(r.is_sat());
 
-  // for (auto v : ts_.statevars()){
-  //   std::cout << v << ":" << solver_->get_value(v) << "\n";
-  //   std::cout << ts_.next(v) << ":" << solver_->get_value(ts_.next(v)) << "\n";
-  //   smt::Term nextv = ts_.next(v);
-  //   std::cout << ia_.abstract(nextv) << ":" << solver_->get_value(ia_.abstract(nextv)) << "\n";
-  // }
-  // for (const auto & p : predlbls_) {    
-  //   std::cout << ts_.next(p) << ": " << solver_->get_value(ts_.next(p)) << "\n";
-  //   std::cout << lbl2pred_.at(p) << ": " << solver_->get_value(ts_.next(lbl2pred_.at(p))) << "\n";
-  // }
   Term prebad = get_nextstate_model();
-  // std::cout << "Extracted bad state: " << prebad->to_string() << "\n";
   out.push_back(prebad);
   pop_solver_context();
 
@@ -177,7 +157,7 @@ RefineResult IC3IAQ::refine()
     logger.log(3, "bad_: " + bad_->to_string());
     solver_->assert_formula(bad_);
     solver_->assert_formula(cex_.back());
-    // TODO here we need to add the invariant that clocks >= 0 
+    // TODO to obtain better predicates, add the invariant that clocks >= 0 
 
     r = solver_->check_sat();
     assert(r.is_sat());
@@ -199,10 +179,6 @@ RefineResult IC3IAQ::refine()
     formulae.pop_back();
 
     formulae.push_back(to_interpolator_.transfer_term(s, BOOL));
-    // std::cout << "Calling interpolation again for:\n";
-    // for (auto f : formulae) {
-    //   std::cout << f << "\n";
-    // }
     r = smt::ResultType::UNKNOWN;
     if (external_interpolator_.getSolverEnum() != ExternalInterpolatorEnum::NONE){
       r = external_interpolator_.get_sequence_interpolants(formulae, out_interpolants);
@@ -316,36 +292,6 @@ bool IC3IAQ::witness(std::vector<smt::UnorderedTermMap> & out)
   }
   pop_solver_context();
 
-  // To explain the rt-consistency, we can enumerate here some successors of the last state
-  // push_solver_context();
-  // smt::Term last_term = solver_->make_term(true);
-  // for (auto v : conc_ts_.statevars()){
-  //   last_term = solver_->make_term(And, last_term, 
-  //       solver_->make_term(Equal, v, out.back()[v])
-  //     );
-  // }
-  // std::cout << "Last_term: " << last_term << "\n";
-  // solver_->assert_formula(unroller_.at_time(last_term, 0));
-  // solver_->assert_formula(unroller_.at_time(conc_ts_.trans(),0));
-  // for (int i = 0; i < 16 && solver_->check_sat() == smt::SAT; i++){
-  //   smt::Term blocking_clause = solver_->make_term(false);
-  //   std::cout << "Possible successor " << i << "\n";
-  //   for (auto v : conc_ts_.inputvars()){
-  //     std::cout << "\t" << v << " = " << 
-  //       solver_->get_value(unroller_.at_time(v, 0)) << "\n";
-  //     blocking_clause = 
-  //       solver_->make_term(Or, blocking_clause, 
-  //         solver_->make_term(Not, solver_->make_term(Equal, v, solver_->get_value(unroller_.at_time(v, 0))))
-  //       );
-  //   }
-  //   for (auto v : conc_ts_.statevars()){
-  //     std::cout << "\t" << v << " = " << 
-  //       solver_->get_value(unroller_.at_time(v, 1)) << "\n";
-  //   }
-  //   // std::cout << "blocking_clause : " << blocking_clause << "\n";
-  //   solver_->assert_formula(unroller_.at_time(blocking_clause, 0));
-  // }
-  // pop_solver_context();
   return true;
 }
 
