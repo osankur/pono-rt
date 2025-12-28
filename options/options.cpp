@@ -138,7 +138,7 @@ const option::Descriptor usage[] = {
     "",
     "",
     Arg::None,
-    "USAGE: pono [options] <btor file>\n\n"
+    "USAGE: pono-rt [options] <btor file>\n\n"
     "Options:" },
   { HELP, 0, "", "help", Arg::None, "  --help \tPrint usage and exit." },
   { ENGINE,
