@@ -1,7 +1,7 @@
 # Set Up Google Tests
 
 # build testing infrastructure
-option(SYSTEM_GTEST "Should we try to use the system GTest" ON)
+option(SYSTEM_GTEST "Should we try to use the system GTest" OFF)
 
 if(SYSTEM_GTEST)
   # try finding a system installation of googletest

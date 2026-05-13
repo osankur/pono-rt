@@ -51,7 +51,7 @@
 %define api.namespace{pono}
 %define api.parser.class{smvparser}
 
-%token MODULE IVAR INVAR VAR FROZENVAR INVARSPEC
+%token MODULE IVAR INVAR VAR FROZENVAR URGENT INVARSPEC
 %token INIT TRANS READ WRITE ASSIGN CONSTARRAY CONSTANTS FUN DEFINE TOK_CASE TOK_ESAC TOK_INIT
 %token TOK_NEXT signed_word unsigned_word arrayword arrayinteger tok_array
 %token pi ABS MAX MIN SIN COS EXP TAN ln of word1
@@ -81,7 +81,10 @@ OP_PLUS "+"
 OP_MINUS "-"
 OP_MUL "*"
 OP_DIV "/"
-DOT ".";
+DOT "."
+TIME_DOMAIN "@TIME_DOMAIN"
+NONE "none"
+CONTINUOUS "continuous";
 
 %right OP_IMPLY
 %left OP_BI
@@ -117,11 +120,21 @@ DOT ".";
 
 header:
     module_decl
+    | time_preamble module_decl
     | header module_decl
     | basic_expr {
       SMVnode *a = $1;
       enc.parse_term = a->getTerm();
     }
+
+time_preamble:
+  TIME_DOMAIN time_domain
+
+time_domain: NONE | CONTINUOUS {
+  if(!enc.is_timed_automaton){
+    throw PonoException("Pono must be called with the --timed-automaton option");
+  }
+}
 
 module_decl:
     MODULE complex_identifier {
@@ -142,6 +155,7 @@ module_decl:
       enc.invar_list_.clear();
       enc.invarspec_list_.clear();
       enc.assign_list_.clear();
+      enc.urgent_list_.clear();
      }
   }
   | MODULE complex_identifier "(" module_parameters ")" {
@@ -162,6 +176,7 @@ module_decl:
       enc.invar_list_.clear();
       enc.invarspec_list_.clear();
       enc.assign_list_.clear();
+      enc.urgent_list_.clear();
     }
   }
 
@@ -243,6 +258,11 @@ module_element:
     | invar_constraint{
     if(!enc.module_flat){
       $$ = new invar_node(enc.invar_list_,SMVnode::INVAR);
+    }
+    }
+    | urgent_constraint{
+    if(!enc.module_flat){
+      $$ = new urgent_node(enc.urgent_list_,SMVnode::URGENT);
     }
     }
     | invarspec_test{
@@ -363,6 +383,13 @@ var_list:
           enc.arrayty_[$1] = a->getElementType();
          } else if(a->getType() == SMVnode::IntArray){
           enc.arrayint_[$1] = a->getElementType();
+         } else if(a->getType() == SMVnode::Clock){
+            try {
+              TimedTransitionSystem & tts = dynamic_cast<TimedTransitionSystem&>(enc.rts_);
+              tts.add_clock_var(state);
+            } catch (std::bad_cast & e){
+              throw PonoException("Clocks can only be used with the --timed-automaton option.");
+            }
          }
       }else{
           enc.var_list_.push_back(new var_node_c($1,$3,SMVnode::BasicT));
@@ -475,13 +502,34 @@ invar_constraint: INVAR invar_list;
 invar_list: basic_expr semioption{
   if(enc.module_flat){
             SMVnode *a = $1;
-            enc.rts_.add_invar(a->getTerm());
+            try {
+              TimedTransitionSystem & tts = dynamic_cast<TimedTransitionSystem&>(enc.rts_);
+              tts.add_invar(a->getTerm());
+            } catch (std::bad_cast & e){
+              enc.rts_.add_invar(a->getTerm());
+            }
             // an invariant is added over current and next states
             enc.transterm_.push_back(make_pair(enc.loc.end.line,a->getTerm()));
             enc.transterm_.push_back(make_pair(enc.loc.end.line,enc.rts_.next(a->getTerm())));
   }else{
      SMVnode *a = new invar_node_c($1);
     enc.invar_list_.push_back(a);
+  }
+};
+
+urgent_constraint: URGENT urgent_list;
+urgent_list: basic_expr semioption{
+  if(enc.module_flat){
+            SMVnode *a = $1;
+            try {
+              TimedTransitionSystem & tts = dynamic_cast<TimedTransitionSystem&>(enc.rts_);
+              tts.add_urgent(a->getTerm());
+            } catch (std::bad_cast & e){
+              throw PonoException("Urgent conditions can only be used with the --timed-automaton option.");
+            }
+  }else{
+     SMVnode *a = new urgent_node_c($1);
+    enc.urgent_list_.push_back(a);
   }
 };
 
@@ -637,6 +685,9 @@ simple_expr: constant {
           }
             | complex_identifier {
             if(enc.module_flat){
+              if (enc.terms_.find($1) == enc.terms_.end()){
+                throw PonoException("Unknwon identifier " + $1);
+              }
               smt::Term tok = enc.terms_.at($1);
               if (enc.unsignedbv_.find($1) != enc.unsignedbv_.end() ) {
                 $$ = new SMVnode(tok, SMVnode::Unsigned);
@@ -1498,6 +1549,14 @@ type_identifier: real_type{
                   $$ =  new type_node(sort_,SMVnode::Boolean);
                   }else{
                     $$ = new type_node("boolean");
+                  }
+                }
+                | time_type {
+                  if(enc.module_flat){
+                  smt::Sort sort_ = enc.solver_->make_sort(smt::REAL);
+                  $$ =  new type_node(sort_,SMVnode::Clock);
+                  }else{
+                    $$ = new type_node("clock");
                   }
                 }
                 | array_type{
