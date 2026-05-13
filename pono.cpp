@@ -397,12 +397,13 @@ int main(int argc, char ** argv)
       TermVec propvec;
 
       if (pono_options.timed_automaton_) {
+        std::unique_ptr<TimedTransitionSystem> tts =
+            std::make_unique<TimedTransitionSystem>(s);
         if (file_ext == "smv") {
-          throw PonoException(
-              "Timed automaton in SMV format is not yet supported.");
+          SMVEncoder smv_enc(pono_options.filename_, *tts);
+          propvec = smv_enc.propvec();
+          rts = std::move(tts);
         } else {
-          std::unique_ptr<TimedTransitionSystem> tts =
-              std::make_unique<TimedTransitionSystem>(s);
           TimedVMTEncoder tvmt_enc(pono_options.filename_, *tts);
           propvec = tvmt_enc.propvec();
           rts = std::move(tts);

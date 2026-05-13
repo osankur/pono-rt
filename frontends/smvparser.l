@@ -28,6 +28,7 @@ MODULE {yylineno = 1; return pono::smvparser::make_MODULE(_encoder.loc);}
 IVAR   {return pono::smvparser::make_IVAR(_encoder.loc);}
 VAR  {return pono::smvparser::make_VAR(_encoder.loc);}
 INVAR   {return pono::smvparser::make_INVAR(_encoder.loc);}
+URGENT   {return pono::smvparser::make_URGENT(_encoder.loc);}
 FROZENVAR   {return pono::smvparser::make_FROZENVAR(_encoder.loc);}
 INVARSPEC   {return pono::smvparser::make_INVARSPEC(_encoder.loc);}
 INIT   {return pono::smvparser::make_INIT(_encoder.loc);}
@@ -39,11 +40,13 @@ CONSTARRAY   {return pono::smvparser::make_CONSTARRAY(_encoder.loc);}
 CONSTANTS   {return pono::smvparser::make_CONSTANTS(_encoder.loc);}
 FUN   {return pono::smvparser::make_FUN(_encoder.loc);}
 DEFINE {return pono::smvparser::make_DEFINE(_encoder.loc);}
-
 next  {return pono::smvparser::make_TOK_NEXT(_encoder.loc);}
 case {return pono::smvparser::make_TOK_CASE(_encoder.loc);}
 esac {return pono::smvparser::make_TOK_ESAC(_encoder.loc);}
 init {return pono::smvparser::make_TOK_INIT(_encoder.loc);}
+"@TIME_DOMAIN" {return pono::smvparser::make_TIME_DOMAIN(_encoder.loc);}
+"none" {return pono::smvparser::make_NONE(_encoder.loc);}
+"continuous" {return pono::smvparser::make_CONTINUOUS(_encoder.loc);}
 
 TRUE   {return pono::smvparser::make_TOK_TRUE(true,_encoder.loc);}
 FALSE   {return pono::smvparser::make_TOK_FALSE(false,_encoder.loc);}

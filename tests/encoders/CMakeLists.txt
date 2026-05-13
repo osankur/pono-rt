@@ -4,6 +4,7 @@ pono_add_test(test_btor2)
 pono_add_test(test_coreir)
 pono_add_test(test_smv)
 pono_add_test(test_timed_vmt)
+pono_add_test(test_timed_smv)
 
 # this is a long-running test
 pono_add_test(test_btor2_ts_copy_equal)

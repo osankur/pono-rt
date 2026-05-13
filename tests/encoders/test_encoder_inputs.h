@@ -35,6 +35,15 @@ const unordered_map<string, pono::ProverResult> smv_inputs(
       { "counter_bitvector.smv", pono::ProverResult::FALSE },
       { "counter_boolean.smv", pono::ProverResult::FALSE } });
 
+const list<tuple<const string, int, pono::ProverResult> > timed_smv_inputs({
+    { "timed_automaton1.smv", 0, pono::ProverResult::FALSE },
+    { "timed_automaton1.smv", 1, pono::ProverResult::TRUE },
+    { "timed_automaton2.smv", 0, pono::ProverResult::TRUE },
+    { "timed_automaton3.smv", 0, pono::ProverResult::FALSE },
+    { "timed_automaton4.smv", 0, pono::ProverResult::UNKNOWN },
+    { "timed_automaton4.smv", 1, pono::ProverResult::FALSE },
+});
+
 const unordered_map<string, pono::ProverResult> tvmt_inputs(
     { { "simple_ta.vmt", pono::ProverResult::TRUE },
       { "simple_ta_2.vmt", pono::ProverResult::FALSE },
