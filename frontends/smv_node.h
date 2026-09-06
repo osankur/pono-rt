@@ -47,6 +47,7 @@ struct SMVnode
     INIT,
     TRANS,
     INVAR,
+    URGENT,
     INVARSPEC
   };
   enum Type
@@ -56,6 +57,7 @@ struct SMVnode
     Integer,
     Real,
     Boolean,
+    Clock,
     // TODO shouldn't have separate WordArray and IntArray types
     // should just be Array ideally
     WordArray,
@@ -159,6 +161,7 @@ class module_node
   element_node * trans_li;
   element_node * invar_li;
   element_node * invarspec_li;
+  element_node * urgent_li;
 
  public:
   module_node(std::string name) { module_name = name; }
@@ -183,6 +186,7 @@ class module_node
     trans_li = new element_node();
     invar_li = new element_node();
     invarspec_li = new element_node();
+    urgent_li = new element_node();
     for (std::unordered_map<SMVnode::NodeMtype, element_node *>::iterator it =
              decl_map.begin();
          it != decl_map.end();
@@ -197,6 +201,7 @@ class module_node
       if (it->first == SMVnode::TRANS) trans_li = it->second;
       if (it->first == SMVnode::INVAR) invar_li = it->second;
       if (it->first == SMVnode::INVARSPEC) invarspec_li = it->second;
+      if (it->first == SMVnode::URGENT) urgent_li = it->second;
     }
   }
 
@@ -214,6 +219,7 @@ class module_node
     trans_li = new element_node();
     invar_li = new element_node();
     invarspec_li = new element_node();
+    urgent_li = new element_node();
     for (std::unordered_map<SMVnode::NodeMtype, element_node *>::iterator it =
              decl_map.begin();
          it != decl_map.end();
@@ -228,6 +234,7 @@ class module_node
       if (it->first == SMVnode::TRANS) trans_li = it->second;
       if (it->first == SMVnode::INVAR) invar_li = it->second;
       if (it->first == SMVnode::INVARSPEC) invarspec_li = it->second;
+      if (it->first == SMVnode::URGENT) urgent_li = it->second;
     }
   }
   unordered_map<string, SMVnode *> get_namelist() { return new_par; }
@@ -446,6 +453,20 @@ class invar_node_c : public SMVnode
                         std::unordered_map<string, string> new_prefix,
                         ostream & s);
 };
+
+class urgent_node_c : public SMVnode
+{
+  SMVnode * ex;
+
+ public:
+  urgent_node_c(SMVnode * t) { ex = t; }
+  void generate_ostream(std::string name,
+                        std::string prefix,
+                        std::unordered_map<string, module_node *> module_list,
+                        std::unordered_map<string, string> new_prefix,
+                        ostream & s);
+};
+
 class invarspec_node_c : public SMVnode
 {
   SMVnode * ex;
@@ -621,6 +642,25 @@ class invar_node : public element_node
 
  public:
   invar_node(std::vector<SMVnode *> li, NodeMtype t)
+  {
+    mt = t;
+    ex_li = li;
+  }
+
+  void generate_ostream(std::string name,
+                        std::string prefix,
+                        std::unordered_map<string, module_node *> module_list,
+                        std::unordered_map<string, string> new_prefix,
+                        ostream & s);
+  std::vector<SMVnode *> get_list() { return ex_li; }
+};
+
+class urgent_node : public element_node
+{
+  std::vector<SMVnode *> ex_li;
+
+ public:
+  urgent_node(std::vector<SMVnode *> li, NodeMtype t)
   {
     mt = t;
     ex_li = li;

@@ -15,8 +15,6 @@
 (define-fun .def_1 () Real (! y__AT0 :nextclock y__AT1))
 (define-fun .def_2 () Real (! loc__AT0 :next loc__AT1))
 (define-fun .def_b () Real (! b__AT0 :next b__AT1))
-
-
 ;; Initial state
 (define-fun .def_3 () Bool (! (and
 (= x__AT0 0.0)
@@ -26,7 +24,7 @@ b__AT0
 ) :init true))
 
 ;; Location invariant
-(define-fun .def_4 () Bool (! 
+(define-fun .def_4 () Bool (!
     (<= x__AT0 3.0)
 :invar true))
 

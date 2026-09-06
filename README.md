@@ -10,28 +10,34 @@ generation of [CoSA](https://github.com/cristian-mattarei/CoSA) and thus was ori
 
 ## Publications
 
-* Makai Mann, Ahmed Irfan, Florian Lonsing, Yahan Yang, Hongce Zhang, Kristopher Brown, Aarti Gupta, Clark W. Barrett: [Pono: A Flexible and Extensible SMT-Based Model Checker](https://link.springer.com/chapter/10.1007/978-3-030-81688-9_22). CAV 2021.
-  * Evaluated [software artifact](https://figshare.com/articles/software/CAV_2021_Artifact_Pono_Model_Checker/14479542).
-* Makai Mann, Amalee Wilson, Yoni Zohar, Lindsey Stuntz, Ahmed Irfan, Kristopher Brown, Caleb Donovick, Allison Guman, Cesare Tinelli, Clark W. Barrett: [Smt-Switch: A Solver-Agnostic C++ API for SMT Solving](https://link.springer.com/chapter/10.1007/978-3-030-80223-3_26). SAT 2021.
+* Áron Ricardo Perez-Lopez, Po-Chun Chien, Florian Lonsing, Samantha Archer, Ahmed Irfan, and Clark Barrett: [Pono 2.0: A Versatile SMT-Based Model Checker for Safety and Liveness (Long Tool Paper)](https://doi.org/10.1007/978-3-032-26220-2_1). FM 2026.
+  * Evaluated [reproduction artifact](https://doi.org/10.5281/zenodo.18680797)
+* Makai Mann, Ahmed Irfan, Florian Lonsing, Yahan Yang, Hongce Zhang, Kristopher Brown, Aarti Gupta, and Clark W. Barrett: [Pono: A Flexible and Extensible SMT-Based Model Checker](https://doi.org/10.1007/978-3-030-81688-9_22). CAV 2021.
+  * Evaluated [software artifact](https://doi.org/10.6084/m9.figshare.14479542).
+* Makai Mann, Amalee Wilson, Yoni Zohar, Lindsey Stuntz, Ahmed Irfan, Kristopher Brown, Caleb Donovick, Allison Guman, Cesare Tinelli, and Clark W. Barrett: [Smt-Switch: A Solver-Agnostic C++ API for SMT Solving](https://doi.org/10.1007/978-3-030-80223-3_26). SAT 2021.
 * Makai Mann: [Augmenting transition systems for scalable symbolic model checking](https://searchworks.stanford.edu/view/13972018). PhD thesis, Stanford University, 2021.
 
 ## Awards
 
-Pono was awarded the Oski Award under its original name _cosa2_ at [HWMCC'19](http://fmv.jku.at/hwmcc19/) for solving the largest number of benchmarks overall.
+* 1st place in Word-Level Arrays Track at [HWMCC 2025](https://hwmcc.github.io/2025/)
+* Oski Award (under its original name _cosa2_) at [HWMCC 2019](http://fmv.jku.at/hwmcc19/) for solving the largest number of benchmarks overall
 
 ## Setup
 
-* [optional] Install bison and flex
-  * If you don't have flex installed globally, run `./contrib/setup-flex.sh`
-  * Bison should be available in your OS package manager (Linux) or Homebrew (macOS).
-* Run `./contrib/setup-smt-switch.sh` -- it will build smt-switch with Bitwuzla
+* Run `./contrib/setup-smt-switch.sh` -- it will build smt-switch with Bitwuzla, cvc5, and the SMT-LIB reader
+  * Note: The SMT-LIB reader requires bison >=3.7 and flex >=2.6.4.
+    * On Linux these can usually be obtained from the distribution using `apt`, `dnf`, `pacman`, or similar.
+    * The command-line tools for XCode on macOS provide flex but the provided bison version is too old.
+    * We include the `contrib/setup-bison.sh` script that can be used to install a more up-to-date version.
+    * Alternatively, Homebrew can also be used to install a newer version of bison.
   * [optional] to build with MathSAT (required for interpolation-based model checking) you need to obtain the libraries yourself
     * note that MathSAT is under a custom non-BSD compliant license and you must assume all responsibility for meeting the conditions
-    * download the solver from https://mathsat.fbk.eu/download.html, unpack it and rename the directory to `./deps/mathsat`
-    * then add the `--with-msat` flag to the `setup-smt-switch.sh` command.
+    * download the solver from https://mathsat.fbk.eu/download.html and unpack it
+    * then add the `--with-msat` flag to the `setup-smt-switch.sh` command, along with `--msat-dir=<path>` unless you renamed the unpacked directory to `./deps/mathsat`
 * Run `./contrib/setup-btor2tools.sh`.
 * Run `./configure.sh`.
   * if building with mathsat, also include `--with-msat` as an option to `configure.sh`
+  * to build against dependencies installed elsewhere, pass their install prefixes with `--smt-switch-dir`, `--bitwuzla-dir`, `--msat-dir`, and `--z3-dir`; `setup-smt-switch.sh` prints the ones you need to repeat
 * Run `cd build`.
 * Run `make`.
 * [optional] Run `make check` to build and run the tests.

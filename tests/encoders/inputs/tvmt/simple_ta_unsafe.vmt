@@ -22,7 +22,7 @@ loc__AT0
 ) :init true))
 
 ;; Location invariant
-(define-fun .def_4 () Bool (! 
+(define-fun .def_4 () Bool (!
     (<= x__AT0 3.0)
  :invar true))
 

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "core/rts.h"
+#include "core/tts.h"
 #include "frontends/smvscanner.h"
 #include "smt-switch/smt.h"
 #include "smvparser.h"
@@ -25,18 +26,45 @@ namespace pono {
 class SMVEncoder
 {
  public:
+  SMVEncoder(std::string filename, pono::TimedTransitionSystem & tts)
+      : rts_(tts), solver_(tts.solver())
+  {
+    file = filename;
+    is_timed_automaton = true;
+
+    // Define reserved clock 'time':
+    smt::Sort realsort = tts.get_solver()->make_sort(smt::REAL);
+    smt::Term time = tts.make_statevar("time", realsort);
+    terms_["time"] = time;
+    tts.add_clock_var(time);
+    tts.constrain_init(tts.get_solver()->make_term(
+        smt::Equal, time, tts.get_solver()->make_term("0", realsort)));
+    tts.constrain_trans(
+        tts.get_solver()->make_term(smt::Equal, time, tts.next(time)));
+
+    build_transition_system();
+    tts.encode_timed_automaton_delays();
+  }
+
   SMVEncoder(std::string filename, pono::RelationalTransitionSystem & rts)
       : rts_(rts), solver_(rts.solver())
   {
-    module_flat = false;
     file = filename;
-    parse(filename);
+    is_timed_automaton = false;
+    build_transition_system();
+  }
+
+ private:
+  void build_transition_system()
+  {
+    module_flat = false;
+    parse(file);
     preprocess();
     module_flat = true;
     loc.end.line = 0;
     std::string output = preprocess().str();
     processCase();
-  };
+  }
 
  public:
   // Important members
@@ -79,6 +107,8 @@ class SMVEncoder
   std::unordered_map<std::string, module_node *> module_list;
   // indicate whether needs to flatten module first
   bool module_flat;
+  // Whether we are parsing an SMV file with timed automaton clocks
+  bool is_timed_automaton;
 
   std::vector<pono::SMVnode *> define_list_;
   std::vector<pono::SMVnode *> assign_list_;
@@ -90,5 +120,6 @@ class SMVEncoder
   std::vector<pono::SMVnode *> trans_list_;
   std::vector<pono::SMVnode *> invar_list_;
   std::vector<pono::SMVnode *> invarspec_list_;
+  std::vector<pono::SMVnode *> urgent_list_;
 };  // class SMVEncoder
 }  // namespace pono

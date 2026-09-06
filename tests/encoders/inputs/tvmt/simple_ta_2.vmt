@@ -44,7 +44,7 @@ loc__AT0
     (= x__AT1 0.0)
     (= y__AT0 y__AT1)
     (not loc__AT1)
-    (not err1_n) (not err2_n) 
+    (not err1_n) (not err2_n)
     )
   )
   (and (not err1) (not err2)  (not loc__AT0) (and
@@ -52,7 +52,7 @@ loc__AT0
     (= x__AT1 0.0)
     (= y__AT1 0.0)
     loc__AT1
-    (not err1_n) (not err2_n) 
+    (not err1_n) (not err2_n)
     )
   )
   (and (not loc__AT0) (> x__AT0 2) err1_n (= err2 err2_n) (= y__AT0 y__AT1) (= x__AT0 x__AT1) (= loc__AT0 loc__AT1))

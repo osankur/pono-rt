@@ -3,14 +3,13 @@ on:
   push:
   workflow_dispatch: # allow manual trigger
 jobs:
-  format-check:
-    runs-on: ubuntu-latest
+  pre-commit:
+    runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v2
-      - name: Check format using clang-format
-        run: |
-          find . -type d -name "contrib" -prune -or -type f \( -name '*.h' -or -name '*.cpp' \) -print \
-          | xargs clang-format --dry-run -Werror --style=file
+      - uses: actions/checkout@v7
+      - uses: j178/prek-action@v2
+        with:
+          extra-args: --all-files
   build:
     strategy:
       fail-fast: false
@@ -23,7 +22,7 @@ jobs:
     name: ${{ matrix.os }}:${{ matrix.build_type }}
     runs-on: ${{ matrix.os}}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Packages (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -34,16 +33,9 @@ jobs:
             libmpfr-dev \
             cmake \
             ninja-build
-      - name: Install Packages (macOS)
+      - name: Install bison (macOS)
         if: runner.os == 'macOS'
-        run: |
-          brew update
-          brew install \
-            bison \
-            flex
-          echo "PATH=$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/flex/bin:$PATH" >> "$GITHUB_ENV"
-          echo "CMAKE_PREFIX_PATH=$(brew --prefix)/opt/flex" >> "$GITHUB_ENV"
-          echo "CPATH=$(brew --prefix)/include" >> "$GITHUB_ENV"
+        run: contrib/setup-bison.sh
       - name: Python Environment Setup
         run: |
           python3 -m venv ./.venv
@@ -59,6 +51,7 @@ jobs:
         run: ./contrib/setup-btor2tools.sh
       - name: Setup Smt-Switch
         env:
+          CPATH: /opt/homebrew/include # let libpoly (from cvc5) find gmp headers
           DYLD_FALLBACK_LIBRARY_PATH: /opt/homebrew/lib # this lets the precompiled MathSAT binary (used in the tests) find libgmp
         run: |
           source .venv/bin/activate
@@ -71,21 +64,25 @@ jobs:
       - name: Build
         run: |
           cd build
-          make -j
+          make -j"$(getconf _NPROCESSORS_ONLN)"
       - name: Upload built executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pono_${{ runner.arch }}_${{ matrix.build_type }}
           path: ./build/pono
       - name: Test C++
         id: test-cpp
         continue-on-error: true
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
         run: |
           cd build
-          make check
+          jobs=$(getconf _NPROCESSORS_ONLN)
+          # -j parallelizes linking the test binaries, the env var running them
+          CTEST_PARALLEL_LEVEL="$jobs" make -j"$jobs" check
       - name: Upload failing test log
         if: steps.test-cpp.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}-${{ matrix.build_type }}-test-log-${{ github.run_id }}
           path: build/tests/Testing/Temporary/LastTest.log

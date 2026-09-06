@@ -1,13 +1,22 @@
+# Copyright (c) 2020 by the authors listed in the file AUTHORS in the top-level
+# source directory and their institutional affiliations. See the file LICENSE
+# in the top-level source directory for licensing information.
+#
+# This file is part of the pono project.
+from __future__ import annotations
+
+from typing import Callable
+
+import pono
 import pytest
 import smt_switch as ss
-import pono
 
 
 @pytest.mark.parametrize("create_solver", ss.solvers.values())
-def test_replace_terms(create_solver):
+def test_replace_terms(create_solver: Callable[[bool], ss.SmtSolver]) -> None:
     solver = create_solver(create_solver is ss.solvers.get("yices2"))
     bvsort8 = solver.make_sort(ss.sortkinds.BV, 8)
-    fts = pono.FunctionalTransitionSystem(solver);
+    fts = pono.FunctionalTransitionSystem(solver)
     x = fts.make_statevar("x", bvsort8)
     a = fts.make_statevar("a", bvsort8)
     b = fts.make_statevar("b", bvsort8)

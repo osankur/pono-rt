@@ -23,11 +23,8 @@
 #include <vector>
 
 #include "optionparser.h"
+#include "options/version.h"
 #include "utils/exceptions.h"
-
-#ifndef PONO_VERSION
-#define PONO_VERSION "unknown"
-#endif
 
 using namespace std;
 
@@ -839,7 +836,7 @@ ProverResult PonoOptions::parse_and_set_options(int argc,
   }
 
   if (options[VERSION]) {
-    cout << PONO_VERSION << endl;
+    cout << version << endl;
     return ERROR;
   }
 
@@ -957,8 +954,10 @@ ProverResult PonoOptions::parse_and_set_options(int argc,
           break;
         case IC3_FUNCTIONAL_PREIMAGE: ic3_functional_preimage_ = true; break;
         case NO_IC3_UNSATCORE_GEN: ic3_unsatcore_gen_ = false; break;
-        case NO_IC3IA_REDUCE_PREDS: ic3ia_reduce_preds_ = false;
-        case NO_IC3IA_TRACK_IMPORTANT_VARS: ic3ia_track_important_vars_ = false;
+        case NO_IC3IA_REDUCE_PREDS: ic3ia_reduce_preds_ = false; break;
+        case NO_IC3IA_TRACK_IMPORTANT_VARS:
+          ic3ia_track_important_vars_ = false;
+          break;
         case NO_IC3IA_SIM_CEX: ic3ia_sim_cex_ = false; break;
         case NO_IC3SA_FUNC_REFINE: ic3sa_func_refine_ = false; break;
         case PROFILING_LOG_FILENAME:
