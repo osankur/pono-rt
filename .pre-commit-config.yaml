@@ -1,0 +1,61 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-merge-conflict
+      - id: check-symlinks
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v23.1.0
+    hooks:
+      - id: clang-format
+        exclude: "^(contrib/|tests/encoders/inputs/coreir/)"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.5
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.13.1-1
+    hooks:
+      - id: shfmt
+        args: [-w, -i, "2", -ci, -s]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/openstack/bashate
+    rev: "2.1.1"
+    hooks:
+      - id: bashate
+        # E003 (4-space indents) and E020 (function name {} declarations)
+        # conflict with this repo's conventions (2-space indents, name() {}).
+        # --error E treats every check as an error rather than a
+        # non-failing warning (all bashate codes start with "E").
+        args: [--ignore, "E003,E020", --error, "E"]
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.21.0
+    hooks:
+      - id: yamlfmt
+  - repo: https://github.com/tombi-toml/tombi-pre-commit
+    rev: v1.5.0
+    hooks:
+      - id: tombi-format
+        args: [--offline]
+      - id: tombi-lint
+        args: [--offline]
+  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
+    rev: 0.28.1
+    hooks:
+      - id: gersemi

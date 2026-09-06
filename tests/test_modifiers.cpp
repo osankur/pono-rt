@@ -3,6 +3,7 @@
 #include "core/fts.h"
 #include "core/rts.h"
 #include "gtest/gtest.h"
+#include "modifiers/array_abstractor.h"
 #include "modifiers/history_modifier.h"
 #include "modifiers/implicit_predicate_abstractor.h"
 #include "modifiers/liveness_to_safety_translator.h"
@@ -61,6 +62,20 @@ TEST_P(ModifierUnitTests, HistoryModifier)
   EXPECT_EQ(num_state_vars_orig + 10, fts.statevars().size());
 }
 
+TEST_P(ModifierUnitTests, HistoryModifierHierarchicalName)
+{
+  // Regression test: get_hist() builds each history variable's name by
+  // concatenating a prefix/suffix onto Term::to_string(), which needs
+  // desanitizing for names that require SMT-LIB `|...|` quoting (e.g.
+  // hierarchical names like SystemVerilog produces, such as "mod.sig[3]").
+  FunctionalTransitionSystem fts(s);
+  Term x = fts.make_statevar("mod.sig[3]", bvsort);
+  fts.assign_next(x, x);
+
+  HistoryModifier hm(fts);
+  ASSERT_NO_THROW(hm.get_hist(x, 3));
+}
+
 TEST_P(ModifierUnitTests, ProphecyModifierSimple)
 {
   FunctionalTransitionSystem fts(s);
@@ -90,6 +105,58 @@ TEST_P(ModifierUnitTests, ProphecyModifierSimple)
 
   // but now the prophecy variable should be also
   EXPECT_TRUE(free_vars.find(proph_var) != free_vars.end());
+}
+
+TEST_P(ModifierUnitTests, ProphecyModifierHierarchicalName)
+{
+  // Regression test: get_proph() builds the prophecy variable's name by
+  // concatenating a prefix/suffix onto Term::to_string(), which needs
+  // desanitizing for names that require SMT-LIB `|...|` quoting. It also
+  // composes HistoryModifier::get_hist() internally, so this exercises
+  // both fixes together.
+  FunctionalTransitionSystem fts(s);
+  Term x = fts.make_statevar("mod.sig[3]", bvsort);
+  fts.assign_next(x, x);
+
+  ProphecyModifier pm(fts);
+  ASSERT_NO_THROW(pm.get_proph(x, 2));
+}
+
+TEST_P(ModifierUnitTests, ImplicitPredicateAbstractorHierarchicalName)
+{
+  // Regression test: do_abstraction() builds the abstracted next-var's name
+  // by concatenating "^" onto Term::to_string(), which needs desanitizing
+  // for names that require SMT-LIB `|...|` quoting.
+  RelationalTransitionSystem rts(s);
+  Term x = rts.make_statevar("mod.sig[3]", bvsort);
+  rts.assign_next(x, x);
+  rts.set_init(rts.make_term(Equal, x, rts.make_term(0, bvsort)));
+
+  RelationalTransitionSystem abs_rts(rts.solver());
+  Unroller un(abs_rts);
+  ImplicitPredicateAbstractor ia(rts, abs_rts, un);
+  ASSERT_NO_THROW(ia.do_abstraction());
+}
+
+TEST_P(ModifierUnitTests, ArrayAbstractorHierarchicalName)
+{
+  if (s->get_solver_enum() == BTOR) {
+    GTEST_SKIP() << "Boolector does not support abstract sorts";
+  }
+  // Regression test: ArrayAbstractor builds names for the abstracted
+  // constant-array, state, and input variables by concatenating a prefix
+  // onto Term::to_string(), which needs desanitizing for names that require
+  // SMT-LIB `|...|` quoting.
+  RelationalTransitionSystem conc_rts(s);
+  Term arr = conc_rts.make_statevar("mod.arr[3]", arrsort);
+  Term arr_in = conc_rts.make_inputvar("mod.in_arr[1]", arrsort);
+  Term constarr0 = conc_rts.make_term(conc_rts.make_term(0, bvsort), arrsort);
+  conc_rts.set_init(conc_rts.make_term(Equal, arr, constarr0));
+  conc_rts.assign_next(arr, arr);
+
+  RelationalTransitionSystem abs_rts(s);
+  ArrayAbstractor aa(conc_rts, abs_rts);
+  ASSERT_NO_THROW(aa.do_abstraction());
 }
 
 TEST_P(ModifierUnitTests, ImplicitPredicateAbstractor)
@@ -219,6 +286,44 @@ TEST_P(ModifierUnitTests, LivenessToSafetyTranslator)
   result = s->check_sat();
   s->pop();
   EXPECT_TRUE(result.is_unsat());
+}
+
+TEST_P(ModifierUnitTests, LivenessToSafetyTranslatorHierarchicalName)
+{
+  // Regression test: a state variable whose name requires SMT-LIB `|...|`
+  // quoting (e.g. a hierarchical name like SystemVerilog produces, such as
+  // "mod.sig[3]") must not corrupt the generated "loop" copy's name.
+  // LivenessToSafetyTranslator used to build the new name via
+  // `statevar->to_string() + suffix`; to_string() already returns the
+  // quoted form for such names, so appending more text after it produced a
+  // malformed name (text trailing a closing quote), which some solvers
+  // (e.g. bzla) reject with "invalid symbol ... not SMT-LIB compliant".
+  FunctionalTransitionSystem fts(s);
+  Term x = fts.make_statevar("mod.sig[3]", bvsort);
+  fts.assign_next(x, x);
+  Term minus_one = fts.make_term(-1, bvsort);
+  Term justice_cond = fts.make_term(smt::Equal, x, minus_one);
+
+  LivenessToSafetyTranslator l2s;
+  ASSERT_NO_THROW(l2s.translate(fts, { justice_cond }));
+
+  Term loop;
+  for (auto statevar : fts.statevars()) {
+    if (statevar != x && statevar->get_sort() == bvsort) {
+      loop = statevar;
+    }
+  }
+  ASSERT_TRUE(loop);
+
+  // The printed name must be a single well-formed SMT-LIB token: after
+  // stripping one optional outer `|...|` quote pair, there must be no
+  // leftover '|' characters.
+  string loop_name = loop->to_string();
+  if (loop_name.size() > 2 && loop_name.front() == '|'
+      && loop_name.back() == '|') {
+    loop_name = loop_name.substr(1, loop_name.size() - 2);
+  }
+  EXPECT_EQ(loop_name.find('|'), string::npos);
 }
 
 INSTANTIATE_TEST_SUITE_P(ParameterizedModifierUnitTests,
