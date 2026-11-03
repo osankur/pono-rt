@@ -1,0 +1,30 @@
+@TIME_DOMAIN continuous
+MODULE main
+VAR
+  loc :  boolean;
+  err : boolean;
+  x : clock;
+  y : clock;
+ASSIGN
+  init(err) := FALSE;
+  init(x) := 1.0;
+  init(y) := 0.0;
+  next(x) := case
+    loc & x <= 2.0 : 0.0;
+    TRUE : x;
+  esac;
+  next(y) := case
+    !loc & y >= 2.0 : 0.0;
+    TRUE : y;
+  esac;
+  init(loc) := TRUE;
+  next(loc) := case
+    loc  & x <= 2.0 : !loc;
+    !loc & y >= 2.0 : !loc;
+    TRUE : loc;
+  esac;
+  next(err) := case
+    !loc & x <= 0.0 & y >= 2.0 : TRUE;
+    TRUE : FALSE;
+  esac;
+INVARSPEC !err
