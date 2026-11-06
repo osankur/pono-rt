@@ -23,9 +23,9 @@ namespace pono {
 class RelationalTransitionSystem : public TransitionSystem
 {
  public:
-  RelationalTransitionSystem() : TransitionSystem(), invariant_(nullptr) {}
+  RelationalTransitionSystem() : TransitionSystem() {}
 
-  RelationalTransitionSystem(const smt::SmtSolver & s) : TransitionSystem(s), invariant_(s->make_term(true)) {}
+  RelationalTransitionSystem(const smt::SmtSolver & s) : TransitionSystem(s) {}
 
   RelationalTransitionSystem(const TransitionSystem & other_ts,
                              smt::TermTranslator & tt)
@@ -56,11 +56,6 @@ class RelationalTransitionSystem : public TransitionSystem
    */
   void constrain_trans(const smt::Term & constraint);
 
-  void constrain_invariant(const smt::Term & constraint);
-  const smt::Term invariant();
-
-  private:
-  smt::Term invariant_;
 };
 
 }  // namespace pono

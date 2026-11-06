@@ -66,7 +66,8 @@ class TimedTransitionSystem : public RelationalTransitionSystem {
         delay_sort_(s->make_sort(smt::REAL)),
         delay_type_(delay_type),
         delay_edge_order_(edge_order),
-        delay_strictness_(strictness)
+        delay_strictness_(strictness),
+        invariant_(s->make_term(true))
         {
         }
     static const std::string DELAY_VAR_NAME;
@@ -107,6 +108,10 @@ class TimedTransitionSystem : public RelationalTransitionSystem {
      * @pre invar() does not contain clock variables
     */
     void encode_timed_automaton_delays();
+
+
+    void constrain_invariant(const smt::Term & constraint);
+    const smt::Term invariant();
 
     protected:
     /**
@@ -157,5 +162,8 @@ class TimedTransitionSystem : public RelationalTransitionSystem {
 
     bool encoded_delays_;
     bool has_dummy_init_transitions_;
+
+    private:
+    smt::Term invariant_;
 };
 }

@@ -49,16 +49,5 @@ void RelationalTransitionSystem::constrain_trans(const Term & constraint)
   }
   trans_ = solver_->make_term(And, trans_, constraint);
 }
-void RelationalTransitionSystem::constrain_invariant(const Term & constraint)
-{
-  // TODO: Only do this check in debug mode
-  if (!known_symbols(constraint)) {
-    throw PonoException("Unknown symbols");
-  }
-  if (invariant_ == nullptr) invariant_ = solver_->make_term(true);
-  invariant_ = solver_->make_term(And, invariant_, constraint);
-}
-const smt::Term RelationalTransitionSystem::invariant(){
-  return invariant_;
-}
+
 }  // namespace pono

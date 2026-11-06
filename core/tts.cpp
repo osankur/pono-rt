@@ -23,7 +23,18 @@ void TimedTransitionSystem::encode_timed_automaton_delays()
   this->encoded_delays_ = true;
   encode_compact_delays();
 }
-
+void TimedTransitionSystem::constrain_invariant(const Term & constraint)
+{
+  // TODO: Only do this check in debug mode
+  if (!known_symbols(constraint)) {
+    throw PonoException("Unknown symbols");
+  }
+  if (invariant_ == nullptr) invariant_ = solver_->make_term(true);
+  invariant_ = solver_->make_term(And, invariant_, constraint);
+}
+const smt::Term TimedTransitionSystem::invariant(){
+  return invariant_;
+}
 void TimedTransitionSystem::add_dummy_init_transitions(){
   assert(!this->has_dummy_init_transitions_);
   this->has_dummy_init_transitions_ = true;
